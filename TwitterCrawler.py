@@ -560,8 +560,9 @@ class TwitterCrawler(object):
                     
                 
                 try:
+                                        
                     # Get the tweet by ID 
-                    retrievedTweet = self.GetSingleTweetByID(singleTweetData['tweetID'])
+                    retrievedTweet = dict(self.GetSingleTweetByID(singleTweetData['tweetID']))
                     
                     # Update the text in the tweet data
                     singleTweetData['tweetText'] = retrievedTweet['text']
