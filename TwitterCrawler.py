@@ -9,6 +9,7 @@ import datetime
 import time
 from random import randrange
 import pickle
+import csv
 
 class TwitterCrawler(object):
     '''
@@ -508,3 +509,85 @@ class TwitterCrawler(object):
             if wrap or isinstance(d, dict):
                 xml = xml + '</' + root + '>\n'
         return xml        
+    
+    # Utility to get single tweet
+    def GetSingleTweetByID(self, tweetID):
+        return self.t.statuses.show(id = tweetID)
+    
+    def GetTweetsByID(self, csvFileName):
+        
+        # Open serializaiton file
+        if(self.serializationFileName != None):
+            serializationFile = open(self.serializationFileName, 'wb')
+        
+        # Open csv for reading
+        csvFile = open(csvFileName, 'r', encoding='UTF-8', newline='')
+        
+        # Get reader handler
+        rows = csv.reader(csvFile, delimiter=',')
+        
+        
+        # Skip the first row
+        skip = True
+        
+        colomns = []
+        
+        rowNum = 0
+        
+        # The tweets objects as returned by twitter
+        tweets = []
+        
+        # The tweets label info from csv file
+        tweetsLabelData = []
+        
+        # Read the label from each row
+        for row in rows:
+            if(skip):
+                # Get the folomns names
+                for item in row:
+                    colomns.append(item.replace('\'', '').strip())
+                skip = False 
+            else:
+                print('Get tweetData ID for row number: ' + str(rowNum))
+                
+                singleTweetData = {}
+                
+                # Fill in example colomns from the csv file
+                i = 0
+                for item in row:
+                    singleTweetData[colomns[i]] = item.replace('\'', '').strip()
+                    i += 1
+                    
+                
+                try:
+                    # Get the tweet by ID 
+                    retrievedTweet = self.GetSingleTweetByID(singleTweetData['tweetID'])
+                    
+                    # Update the text in the tweet data
+                    singleTweetData['tweetText'] = retrievedTweet['text']
+                    retrievedTweet['label'] = singleTweetData['Sentiment']
+                    
+                    # Update the final list of tweets
+                    tweets.append(retrievedTweet)
+                    tweetsLabelData.append(singleTweetData)
+                except Exception as e:
+                    # Rate limit exceeded
+                    print('Error: ' + str(e)) 
+                    if('Twitter sent status 429' in str(e)):
+                        # Sleep 15 min, only 180 calls permitted per 15 min
+                        time.sleep(900)
+                # Add in the results
+                
+                
+            
+            rowNum += 1
+        
+        # Serialize the results
+        if(self.serializationFileName != None):
+            pickle.dump(tweets, serializationFile)
+            pickle.dump(tweetsLabelData, serializationFile)
+            serializationFile.close()
+        # Close the files   
+        csvFile.close()
+        
+        
