@@ -40,6 +40,7 @@ class TwitterCrawler(object):
         '''
         Constructor
         '''
+        
         # Parse the configurations file
         self.ParseConfigFile(configFileName)
         
@@ -52,10 +53,12 @@ class TwitterCrawler(object):
                                     self.consumerSecret)
                          )
         # Open the log file
-        self.logFile = open(feedsLogFileName, 'w', encoding='utf-8')    
+        if(feedsLogFileName != None):
+            self.logFile = open(feedsLogFileName, 'w', encoding='utf-8')    
         
-        # Open the update rate file
-        self.updateRateFile = open(updateRateFileName, 'w', encoding='utf-8')    
+        if(updateRateFileName != None):
+            # Open the update rate file
+            self.updateRateFile = open(updateRateFileName, 'w', encoding='utf-8')    
 
         # Save the serialization file name
         self.serializationFileName = serializationFileName
@@ -298,6 +301,72 @@ class TwitterCrawler(object):
         self.noOlderOrNewerTweets = (results.__len__() == 0)
         return results
     
+    # Encapsulates long query > 1000 char limitation
+    def SearchQueryAPI(self, query, since_id, max_id):
+        
+        # Initialize the finalResults list
+        finalResults = []
+        # Initialize the search hash table
+        searchHashTbl = {}
+        # Log time of calling the API
+        print("Call the twitter search API:" + str(datetime.datetime.now()) + "\n")
+        try:
+            # For each query all the search API
+            if(max_id == -1):
+                if(since_id == -1):
+                    resultsAPI = self.t.search.tweets(q=query,
+                                                      #geocode=self.geocodeStr,
+                                                      lang=self.language,
+                                                      count=self.resultsPerSearch,
+                                                      result_type='recent')
+                else:
+                    resultsAPI = self.t.search.tweets(q=query,
+                                                      #geocode=self.geocodeStr,
+                                                      lang=self.language,
+                                                      count=self.resultsPerSearch,
+                                                      result_type='recent',
+                                                      since_id=since_id)
+                    
+            else:
+                if(since_id == -1):
+                    resultsAPI = self.t.search.tweets(q=query,
+                                                      #geocode=self.geocodeStr,
+                                                      lang=self.language,
+                                                      count=self.resultsPerSearch,
+                                                      result_type='recent',
+                                                      max_id=max_id)
+                else:
+                    resultsAPI = self.t.search.tweets(q=query,
+                                                      #sgeocode=self.geocodeStr,
+                                                      lang=self.language,
+                                                      count=self.resultsPerSearch,
+                                                      result_type='recent',
+                                                      since_id=since_id,
+                                                      max_id=max_id)                    
+        except Exception as e:
+            print("HTTP error, most probably rate\n")
+
+            
+        try:        
+            results = resultsAPI['statuses']
+        
+            # Add the results one by one, unless it already exists in the list
+            for result in results:
+                # If the current result doesn't exist in the hash table then add it
+                if not result['text'] in searchHashTbl:
+                    # Update hash table
+                    searchHashTbl[result['text']] = self.EXIST
+                    
+                    # Add to final results list
+                    finalResults.append(result)
+                                       
+                    # Update the update rate log file with the current time
+                    print("New Tweet at: " + str(datetime.datetime.now()) + "\n")
+        except:
+            print("No results returned")
+       
+        return finalResults     
+     
     # Encapsulates the search iterations to handle more than 100 counts per call    
     def SearchRecent(self, since_id):
         resultsQuery = self.SearchQuery(since_id=since_id, max_id=-1)
