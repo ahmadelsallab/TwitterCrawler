@@ -541,7 +541,9 @@ class TwitterCrawler(object):
         tweetsLabelData = []
         
         # Read the label from each row
+        print('Started at: ' + str(datetime.datetime.now()) +'\n')
         for row in rows:
+            
             if(skip):
                 # Get the folomns names
                 for item in row:
@@ -576,7 +578,9 @@ class TwitterCrawler(object):
                     print('Error: ' + str(e)) 
                     if('Twitter sent status 429' in str(e)):
                         # Sleep 15 min, only 180 calls permitted per 15 min
+                        print(str(datetime.datetime.now()))
                         time.sleep(900)
+                        print(str(datetime.datetime.now()))
                 # Add in the results
                 
                 
@@ -590,5 +594,6 @@ class TwitterCrawler(object):
             serializationFile.close()
         # Close the files   
         csvFile.close()
+        print('Finished at: ' + str(datetime.datetime.now()) +'\n')
         
         
