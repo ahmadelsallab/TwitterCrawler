@@ -10,7 +10,7 @@ from TwitterCrawler import TwitterCrawler
 configFileCrawler = "..\\configurations\\Configurations_TwitterCrawler.xml"
 
 # CSV File
-csvFileName = "..\\input_data\\V2-GS-R&R-TwitterSentimentCorpus2014-Ar.csv"
+csvFileName = "..\\input_data\\V2-GS-R&R-TwitterSentimentCorpus2014-Ar - Short.csv"
 
 # Serialization binary file name
 serializatoinFileName = "..\\output_results\\results_tweets.bin"
